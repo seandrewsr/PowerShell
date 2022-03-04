@@ -64,7 +64,7 @@ try
 
   if ($IAAddInFound) ## display addin found/not found message to console
   {
-    write-host("The InterAction add-in was found") -foregroundcolor "Yellow" -backgroundcolor "Blue"
+    write-host("The add-in was found") -foregroundcolor "Yellow" -backgroundcolor "Blue"
   
     if ($IsAddInEnabled) ## display addin enabled/not enabled message to console
     {
