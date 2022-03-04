@@ -1,0 +1,26 @@
+
+
+## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## load sharepoint snapin
+$snapin = Get-PSSnapin | where-object { $_.Name -eq "Microsoft.SharePoint.PowerShell" }
+if ($snapin -eq $null)
+  {
+  write-host "Loading SharePoint PowerShell Snapin..." -foregroundcolor "Green"
+  add-pssnapin Microsoft.SharePoint.PowerShell
+  write-host "SharePoint PowerShell Snapin loaded." -foregroundcolor "Yellow"
+  }
+  else
+  {
+  write-host "SharePoint PowerShell Snapin already loaded." -foregroundcolor "Yellow"
+  }
+
+## reference sharepoint assembly
+[void][system.reflection.assembly]::Loadwithpartialname("Microsoft.SharePoint") | out-null
+
+## reference office server search assembly
+[void][system.reflection.assembly]::Loadwithpartialname("Microsoft.Office.Server.Search") | out-null
+
+## reference office server assembly
+[void][system.reflection.assembly]::Loadwithpartialname("Microsoft.Office.Server") | out-null
+## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
