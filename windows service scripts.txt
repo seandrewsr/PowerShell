@@ -1,0 +1,34 @@
+﻿
+# some general windows service scripts
+cls
+
+
+
+# get list of services - send output to text file
+Get-Service  | Out-String | Set-Content -Path C:\tempfile.txt
+
+
+# get list of stopped services - send output to text file
+Get-Service | Where-Object {$_.Status -eq "Stopped"}
+
+
+# search for a service by name - send output to text file
+Get-Service | Where-Object {$_.Name -like "IC3Adapter"}
+
+
+# get the specifid service - send output to text file
+Get-Service "IC3Adapter"
+
+
+# get list of running services - send output to text file
+Get-Service | Where-Object {$_.Status -eq "Running"}
+
+
+ # get list of running services - send output to text file
+ Get-Service | Where-Object {$_.Status -eq "Paused"}
+
+
+
+
+
+
