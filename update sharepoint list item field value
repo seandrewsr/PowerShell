@@ -1,0 +1,39 @@
+# update sharepoint list item field value
+
+
+cls
+
+if(!(Get-PSSnapin Microsoft.SharePoint.PowerShell -ErrorAction:SilentlyContinue)) 
+{ 
+    Add-PsSnapin Microsoft.SharePoint.PowerShell 
+} 
+ 
+Write-Host "working..."
+$web = Get-SPWeb https://sharepointserver.com/sites/content/
+
+Write-Host "getting list item count..."
+$list = $web.Lists["TheSPListName"]
+$listitemsCount = $list.Items.Count
+Write-Host "Items in list: " $listitemsCount " -" $list.title
+
+$listitems = $list.Items
+
+foreach($item in @($listitems))  
+{
+  $value = $item["TheField: Comments"]
+  write-host $value
+
+  if($value -eq "Test1") # if the filed value = "test1"
+  {
+    $NewValue = "Test2" # then update it with "test2"
+    $item["Affiliate: Comments"] = $NewValue
+    $item.update()
+    Write-Host $affiliateContactId "updated"
+  }
+}
+
+Write-Host "done."
+
+
+
+
