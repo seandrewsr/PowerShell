@@ -1,0 +1,34 @@
+# sql stored procedure display restult set
+
+cls
+
+Write-Host "working..."
+
+$SQLServer = "the_sql_server"
+$SQLDBName = "the_database"
+$SqlQuery = "the_stored_procedure"
+
+$SqlConnection = New-Object System.Data.SqlClient.SqlConnection
+$SqlConnection.ConnectionString = "Server = $SQLServer; Database = $SQLDBName; Integrated Security = True"
+
+$SqlCmd = New-Object System.Data.SqlClient.SqlCommand
+$SqlCmd.CommandType = [System.Data.CommandType]::StoredProcedure
+$SqlCmd.CommandText = $SqlQuery
+$SqlCmd.Connection = $SqlConnection
+
+$SqlAdapter = New-Object System.Data.SqlClient.SqlDataAdapter
+$SqlAdapter.SelectCommand = $SqlCmd
+
+$DataSet = New-Object System.Data.DataSet
+$SqlAdapter.Fill($DataSet)
+
+$SqlConnection.Close()
+
+foreach ($Row in $DataSet.Tables[0].Rows)
+{
+  Write-Host "$($Row.FieldName)"
+}
+
+Write-Host "done."
+
+
