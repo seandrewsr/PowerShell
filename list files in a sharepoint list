@@ -1,0 +1,30 @@
+# list files in a sharepoint list
+
+
+cls
+
+if(!(Get-PSSnapin Microsoft.SharePoint.PowerShell -ErrorAction:SilentlyContinue)) 
+{ 
+    Add-PsSnapin Microsoft.SharePoint.PowerShell 
+} 
+ 
+Write-Host "working..."
+$web = Get-SPWeb https://sharepointsite.com/sites/content/list/
+
+Write-Host "getting list item count..."
+$list = $web.Lists["AffiliateCV"]
+$listitemsCount = $list.Items.Count
+Write-Host "Items in list: " $listitemsCount " -" $list.title
+
+$listitems = $list.Items
+
+foreach($item in @($listitems))  
+{
+  write-host $item.ID
+}
+
+Write-Host "done."
+
+
+
+
