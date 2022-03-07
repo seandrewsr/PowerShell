@@ -1,0 +1,122 @@
+# iterate list of pdf files
+# that are on a network drive
+# opern each pdf file and look for
+# a specific word
+# this example will look for the word "UseAttachments"
+# if "UseAttachments" found then copy the pdf file
+# to a different network location
+
+cls
+
+# declare variables
+$_unc_path = "\\server\d$\files\" # the portfolio pdf unc
+$_mapped_path = "z:\" # the drive mapping to the portfolio pdf unc
+$_copy_to_folder = "c:\test_target" # the directory to copy the pdfs to
+$_is_portfolio_pdf = $false # default value
+
+Write-Host "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+Write-Host "the variables"
+Write-Host ""
+Write-Host $_unc_path
+Write-Host $_target_direcory_for_file_copy
+Write-Host "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+
+Write-Host ""
+
+Try
+{
+  # map network drive to the designated $_unc_path if it does not exist
+  Write-Host "Mapping network drive the the portfolio pdf unc"
+  $_pathExists = Test-Path -Path $_mapped_path
+  If (-not ($_pathExists))
+  {
+    New-PSDrive –Name 'Z' –PSProvider FileSystem –Root $_unc_path –Persist # map the network drive
+  }
+  else
+  {
+    Remove-PSDrive Z –Force -Verbose # remove existing z-drive mapping (just in case one exists prior to running this script)
+    New-PSDrive –Name 'Z' –PSProvider FileSystem –Root $_unc_path –Persist # map the network drive
+  }
+
+  
+  Write-Host ""
+
+  # does the copy to directory (destincation directory) exist
+  # if not then create it
+  # if it does then delete all files from it
+  if (Test-Path -Path $_copy_to_folder)
+  {
+    Write-Host "deleting existing files from " $_copy_to_folder
+    Get-ChildItem -Path $_copy_to_folder -File | Remove-Item # delete existing destination directory pdf files
+  }
+  else
+  {
+    [system.io.directory]::CreateDirectory($_copy_to_folder) # create the destination pdf directory
+    Write-Host $_copy_to_folder " directory created"
+  }
+
+  Write-Host ""
+  Write-Host "drive mapped: " $_mapped_path -foregroundcolor "Yellow"
+  Write-Host ""
+  Write-Host "looking for portfolio pdf files" -foregroundcolor "Yellow"
+  Write-Host ""
+  Write-Host "go get a cuppa joe" -foregroundcolor "White"
+  Write-Host "this may take a while..." -foregroundcolor "White"
+  Write-Host ""
+
+
+  # using this method to look for portfolio pdf files instead of this code
+  # Get-ChildItem $_mapped_path -Filter *.pdf -recurse | Select-String -pattern "UseAttachments" | group path | select name
+  
+  # because we want to copy each portfolio pdf file as it is found
+  # instead of listing all of the files all at once
+
+  $files = Get-ChildItem $_mapped_path
+  Write-Host $files.Count " files found"
+
+  # look at pdf files to see which are portfolio type in mapped network drive
+  # look for "UseAttachments" in the pdf file metadata
+  foreach ($file in $files)
+  {
+    $_the_file_name = $file.FullName # record the file name for the copy
+    $_is_portfolio_pdf = $false
+
+    $file = New-Object System.IO.StreamReader($file.FullName) # open the pdf file
+    while(($line = $file.readline()) -ne $null) # iterate the pdf file
+    {
+      if($line.Contains('UseAttachments')) # isportfolio ?
+      {
+        # yes portfolio pdf file
+        $file.Close() # close the file before we copy it
+        Write-Host "copy " $_the_file_name " to " $_copy_to_folder
+		
+        Copy-Item $_the_file_name -Destination $_copy_to_folder -Recurse # copy that bad boy file
+        break # file found - break out of the while-loop
+        $_is_portfolio_pdf = true # for the below if-statement
+      }
+    }
+    $file.Close() # close the pdf file
+
+    # if not portfolio pdf then let the user know we are still looking
+    if(-not ($_is_portfolio_pdf))
+    {
+      Write-Host "looking for portfolio pdf"
+      $_is_portfolio_pdf = $false # for shits and giggles
+    }
+  }
+}
+Catch
+{
+  Write-Host "Danger Will Robinson"`n -ForegroundColor Blue -BackgroundColor Yellow
+  Write-Host "The error message" -ForegroundColor Yellow
+  Write-Host [$($_.Exception.Message) -ForegroundColor Red -BackgroundColor DarkBlue
+}
+
+
+
+
+# garbage collection
+Remove-PSDrive Z –Force -Verbose
+
+
+
