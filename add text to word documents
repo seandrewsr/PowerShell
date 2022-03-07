@@ -1,0 +1,71 @@
+# get list of documents from a sql table or view
+# populate a dataset with these results
+# open word document and insert text into it
+# and then save it
+# Set-ExecutionPolicy RemoteSigned
+
+
+cls
+
+$ErrorActionPreference = 'Continue'
+write-host "begin processing"
+
+write-Output "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" >> c:\ps\results.txt # log the results to a text file (you could also log the results to a sql table)
+write-Output "begin processing" >> c:\ps\results.txt # log the results to a text file (you could also log the results to a sql table)
+
+$SqlConnection = New-Object System.Data.SqlClient.SqlConnection
+$SqlConnection.ConnectionString = "Server=sql_server;Database=sql_database;Integrated Security=True"
+$SqlCmd = New-Object System.Data.SqlClient.SqlCommand
+$SqlCmd.CommandText = "select distinct fielname from table_or_view" # this could also be a stored procedure
+$SqlCmd.Connection = $SqlConnection
+$SqlAdapter = New-Object System.Data.SqlClient.SqlDataAdapter
+$SqlAdapter.SelectCommand = $SqlCmd
+$DataSet = New-Object System.Data.DataSet
+$SqlAdapter.Fill($DataSet)
+$SqlConnection.Close()
+# $DataSet.Tables[0]
+
+$objWord = New-Object -comobject Word.Application  
+$objWord.Visible = $False
+$password = "pw"
+$text = "WORD COMPATABILITY ISSUES MAY EXIST. CONTACT YOUR BILLING COORDIANTOR FOR ASSISTANCE"
+$nl = [Environment]::NewLine
+$_rec = 0
+
+foreach ($Row in $DataSet.Tables[0].Rows)
+{
+
+  $_rec = $_rec + 1
+  write-Output "$_rec"
+  write-Output "$_rec" >> c:\ps\results.txt # log the results to a text file (you could also log the results to a sql table)
+  write-Output "$($Row.filepath)" >> c:\ps\results.txt # log the results to a text file (you could also log the results to a sql table)
+
+  $objDoc = $objWord.Documents.Open("$($Row.filepath)")
+  $objDoc.Activate()
+  $objDoc.Unprotect([ref]$password)
+  $objSelection = $objWord.Selection # By default Selection object will appear at the beginning of the document
+  $objSelection.MoveDown()
+  $objSelection.MoveDown()
+  $objSelection.MoveDown()
+  $objSelection.TypeText($nl)
+  $objSelection.TypeText($nl)
+  $objSelection.TypeText($nl)
+  $objSelection.Font.Color = "255" # red
+  $objSelection.Font.Size = 11
+  $objSelection.Font.Bold = $True
+  $objSelection.TypeText($text)
+
+  $objDoc.Protect(3,[ref]$true,[ref]$password) # protect word document wiht a password
+  $objDoc.Save()
+  $objDoc.Close()
+
+  $_ | Out-File c:\ps\results.txt -Append # log the results to a text file (you could also log the results to a sql table)
+}
+
+$objWord.quit()
+
+write-Output "processing complete" >> c:\ps\results.txt
+write-Output "error variable" >> c:\ps\results.txt
+write-Output "$error[0]" >> c:\ps\results.txt
+write-Output "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" >> c:\ps\results.txt
+
