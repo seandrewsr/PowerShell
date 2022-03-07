@@ -1,0 +1,43 @@
+# print pdf files that are in a specific directory
+
+$PrintPageHandler =
+{
+  param([object]$sender, [System.Drawing.Printing.PrintPageEventArgs]$ev)
+}
+
+function ConvertTo-PDF
+{
+  param($FileToPrint, $OutputFolder)
+
+  Add-Type -AssemblyName System.Drawing
+  $doc = New-Object System.Drawing.Printing.PrintDocument
+  $doc.DocumentName = $FileToPrint
+  $doc.PrinterSettings = new-Object System.Drawing.Printing.PrinterSettings
+  $doc.PrinterSettings.PrinterName = 'Microsoft Print to PDF'
+  $doc.PrinterSettings.PrintToFile = $true
+
+  $doc.add_PrintPage($PrintPageHandler)
+
+  Write-Host "source = " $FileToPrint -foregroundcolor "Green"
+  Write-Host "destination = " $OutputFolder -foregroundcolor "Yellow"
+  
+  $doc.PrinterSettings.PrintFileName = $OutputFolder
+  $doc.Print()
+  Write-Host "Printing: " $OutputFolder
+  $doc.Dispose()
+}
+
+
+
+cls
+
+$TestFileFolder = "C:\DocsToPrint\"
+$OutputFolder = "C:\DocsToPrint\Printed\"
+
+$files = Get-ChildItem -Path $TestFileFolder
+
+# Send each test file to the print job
+foreach ($testFile in $files)
+{
+  ConvertTo-PDF $TestFileFolder$testFile $OutputFolder$testFile
+}
