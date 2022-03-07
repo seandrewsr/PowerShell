@@ -1,0 +1,43 @@
+# Get Active Directory users in an OU tree
+
+
+# https://www.microsoft.com/en-us/download/details.aspx?id=7887
+# After you install the package, you must open the Programs Control Panel, select Turn Windows Features
+# On Or Off, and select the appropriate check boxes under Remote Server Administration Tools
+
+Clear-Host 
+Import-Module ActiveDirectory
+
+write-host ""
+write-host ""
+write-host "Active Directory" -foregroundcolor "Green"
+write-host ""
+write-host ""
+
+Write-Host "Processing" 
+
+$Root = [ADSI]"LDAP://ou=THE_OU,dc=THE_DOMAIN,dc=THE_DOMAIN"
+$Searcher = New-Object System.DirectoryServices.DirectorySearcher
+$Searcher.SearchRoot = $Root
+$Searcher.PageSize = 200
+$Searcher.SearchScope = "subtree"
+
+# Filter on all user objects.
+$Searcher.Filter = "(&(objectcategory=person)(objectClass=user))"
+$Searcher.PropertiesToLoad.Add("distinguishedName") > $Null
+
+$Results = $Searcher.FindAll() 
+ForEach ($Result In $Results) 
+{
+    $DN = $Result.properties.Item("distinguishedName")
+
+    # Bind to the user object.
+    $User = [ADSI]"LDAP://$DN"
+
+    # Retrieve the ADsPath of the parent OU/container.
+    $Parent = [ADSI]$User.Parent
+
+    # Display "pre-Windows 2000 logon" name and the RDN of the parent OU.
+    "$($User.sAMAccountName): ($($Parent.ou))"
+}
+
