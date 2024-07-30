@@ -1,0 +1,25 @@
+    
+Add red bold text to end of Word document
+
+  
+  # Add red bold text to end of Word document
+
+  $objWord = New-Object -comobject Word.Application # instantiate word com object
+  $objWord.Visible = $False # do not show word ui
+  $text = "Text to add to the end of the Word document"
+  $nl = [Environment]::NewLine
+
+  $objDoc = $objWord.Documents.Open("$(filepath_docname)")
+  $objDoc.Activate()
+  $objSelection = $objWord.Selection # By default selection object will appear at the beginning of the document
+  $objSelection.EndKey Unit:=wdStory # move to end of word document
+  $objSelection.Font.Color = "255" # red
+  $objSelection.Font.Size = 11
+  $objSelection.Font.Bold = $True
+  $objSelection.TypeText($nl) # add carriage return to end of document
+  $objSelection.TypeText($text) # add the text to end of document
+  $objDoc.Save() # save to document
+  $objWord.quit() # quit word
+  
+  
+  

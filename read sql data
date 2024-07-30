@@ -1,0 +1,46 @@
+## read sql data
+
+
+<#
+  run as powershell administrator 
+#>
+
+cls
+
+# define/set variables
+$_SQLServer = "the sql server name"
+$_SQLDBName = "the sql database"
+$_SqlQuery = "the stored procedure name or sql view name"
+
+Write-Host "begin"
+Write-Host "filling dataset"
+
+# connect to sql server database
+# run stored procedure
+# fill a dataset with the result set
+# disconnect from and close sql connection
+
+$_SqlConnection = New-Object System.Data.SqlClient.SqlConnection
+$_SqlConnection.ConnectionString = "Server = $_SQLServer; Database = $_SQLDBName; Integrated Security = True"
+$_SqlCmd = New-Object System.Data.SqlClient.SqlCommand
+$_SqlCmd.CommandType = [System.Data.CommandType]::Text
+$_SqlCmd.CommandText = $_SqlQuery
+$_SqlCmd.Connection = $_SqlConnection
+$_SqlAdapter = New-Object System.Data.SqlClient.SqlDataAdapter
+$_SqlAdapter.SelectCommand = $_SqlCmd
+$_DataSet = New-Object System.Data.DataSet
+$_SqlAdapter.Fill($_DataSet)
+$_SqlConnection.Close()
+
+Write-Host "dataset populated"
+Write-Host "iterating dataset"
+
+# iterate the dataset
+foreach ($_Row in $_DataSet.Tables[0].Rows)
+{
+  $_sqlfield1 = "$($_Row._sqlfield1)"
+  $_sqlfield2 = "$($_Row._sqlfield2)"
+  Write-Host _sqlfield1 - _sqlfield2
+}
+
+Write-Host "done"

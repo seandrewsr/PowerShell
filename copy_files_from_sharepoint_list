@@ -1,0 +1,190 @@
+## copy image files from a sharepoint list to a network location
+## size the copied image files to 100px x 100px and then save
+
+
+
+cls
+
+
+# load the sharepoint stuff
+
+function LoadSPPreReqAssemblies
+{
+
+  param()
+
+cls
+
+  ## -- load reference assemply/snapin
+  $snapin = Get-PSSnapin | where-object { $_.Name -eq "Microsoft.SharePoint.PowerShell" } ## load sharepoint snapin
+  if ($snapin -eq $null)
+    {
+    write-host "Loading SharePoint PowerShell Snapin..." -foregroundcolor "Green"
+    add-pssnapin Microsoft.SharePoint.PowerShell
+    write-host "SharePoint PowerShell Snapin loaded." -foregroundcolor "Yellow"
+    }
+    else
+    {
+    write-host "SharePoint PowerShell Snapin already loaded." -foregroundcolor "Yellow"
+    }
+
+  #[void][system.reflection.assembly]::Loadwithpartialname("Microsoft.SharePoint") | out-null ## reference sharepoint assembly
+  #[void][system.reflection.assembly]::Loadwithpartialname("Microsoft.Office.Server.Search") | out-null ## reference office server search assembly
+  #[void][system.reflection.assembly]::Loadwithpartialname("Microsoft.Office.Server") | out-null ## reference office server assembly
+
+  write-host "Prerequisite SnapIn Assemblies Loaded " -foregroundcolor "Yellow"
+  $host.Runspace.ThreadOptions = "ReuseThread"
+  write-host "ThreadOptions is set to ReuseThread" -foregroundcolor "Green"
+}
+# end pre-requisites definition
+
+
+
+
+
+LoadSPPreReqAssemblies  # load the sharepoint pre-requisites
+
+
+
+
+Function Set-ImageSize
+{ # begin function
+
+  [CmdletBinding(SupportsShouldProcess=$True, ConfirmImpact="Low")]    
+
+  Param
+  (
+    [parameter(Mandatory=$true,
+      ValueFromPipeline=$true,
+      ValueFromPipelineByPropertyName=$true)]
+    [Alias("Image")]  
+    [String[]]$FullName,
+    [String]$Destination = $(Get-Location),
+    [Switch]$Overwrite,
+    [parameter(Mandatory=$true)]
+    [Int]$WidthPx,
+    [parameter(Mandatory=$true)]
+    [Int]$HeightPx,
+    [Switch]$FixedSize,
+    [Switch]$RemoveSource
+  )
+
+  Begin
+  {
+    [void][reflection.assembly]::LoadWithPartialName("System.Windows.Forms")
+  }
+  
+  Process
+  {
+
+    Foreach($ImageFile in $FullName)
+    {
+        $OldImage = new-object System.Drawing.Bitmap $ImageFile
+        $OldWidth = $OldImage.Width
+        $OldHeight = $OldImage.Height
+        
+
+        if($OldWidth -lt $OldHeight)
+        {
+          $NewWidth = $WidthPx
+          [int]$NewHeight = [Math]::Round(($NewWidth*$OldHeight)/$OldWidth)
+            
+          if($NewHeight -gt $HeightPx)
+          {
+            $NewHeight = $HeightPx
+            [int]$NewWidth = [Math]::Round(($NewHeight*$OldWidth)/$OldHeight)
+          }
+        }
+        else
+        {
+          $NewHeight = $HeightPx
+          [int]$NewWidth = [Math]::Round(($NewHeight*$OldWidth)/$OldHeight)
+            
+          if($NewWidth -gt $WidthPx)
+          {
+            $NewWidth = $WidthPx
+            [int]$NewHeight = [Math]::Round(($NewWidth*$OldHeight)/$OldWidth)
+          }            
+        }
+
+        $SaveLocation = $theResultingFile
+
+        $NewImage = new-object System.Drawing.Bitmap $NewWidth,$NewHeight
+
+        $Graphics = [System.Drawing.Graphics]::FromImage($NewImage)
+        $Graphics.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+        $Graphics.DrawImage($OldImage, 0, 0, $NewWidth, $NewHeight) 
+
+        $ImageFormat = $OldImage.RawFormat
+        $OldImage.Dispose()      
+        $NewImage.Save($SaveLocation,$ImageFormat)
+        $NewImage.Dispose()
+        Write-Verbose "Image '$ImageFile' was resize from $($OldWidth)x$($OldHeight) to $($NewWidth)x$($NewHeight) and save in '$SaveLocation'"
+    }
+
+  } #End Process
+  
+  End{}
+} # end function
+
+
+
+
+
+# begin program main
+
+write-host ""
+write-host "Begin"
+
+
+# set the target/destination unc path
+# get a handle on the main sharepoint website
+# reference the source document library
+
+$destination = "\\thenetwork\unc\destination\" 
+
+$web = Get-SPWeb -Identity "https://the_sharepoint_site.com/"
+list = $web.GetList("/sp_site/content/the_sp_list_name/")
+
+write-host $list
+write-host "there are " + $list.Items.Count + " items in this document library"
+
+# iterate through each document in
+# the source document library
+# and copy each document to the
+# target/destination unc path
+# using file binary connection
+foreach($item in $list.Items)
+{
+  # $file = $item.File  ## this will give the full path spec (SiteCollectionImages/Staff/imagefilename.JPG)
+  # $file = $item.File.Name  ## this will give just the file name (imagefilename.JPG)
+
+  $file = $item.File # reference the current file in the document library
+  $theFileName = $file.Name
+  $theResultingFile = $destination+$theFileName
+
+
+  # copy the file as binary
+  $binary = $file.OpenBinary()
+  $stream = New-Object System.IO.FileStream($destination + "/" + $file.Name), Create
+  $writer = New-Object System.IO.BinaryWriter($stream)
+  $writer.write($binary)
+  $writer.Close()
+
+##  write-host "copied $destination"
+##  write-host $theResultingFile
+  
+  ## size the image file to 100x100
+  Set-ImageSize -Image $theResultingFile -WidthPx 100 -HeightPx 100 -Verbose
+
+}
+
+
+write-host ""
+write-host "Done"
+exit
+
+# end program main
+
+
+

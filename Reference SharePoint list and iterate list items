@@ -1,0 +1,34 @@
+Reference SharePoint list and iterate list items
+
+
+Load SharePoint snap-in, reference SharePoint list and iterate list items
+  Execute the PowerShell script in the context of an account that has SharePoint access
+  This is typically a domain service account
+    
+  
+    # get sharepoint list items
+    cls
+
+    if(!(Get-PSSnapin Microsoft.SharePoint.PowerShell -ErrorAction:SilentlyContinue)) 
+    { 
+        Add-PsSnapin Microsoft.SharePoint.PowerShell 
+    } 
+ 
+    Write-Host "working..."
+    $web = Get-SPWeb https://sharepoint.server.comm/sites/content
+
+    Write-Host "getting list item count..."
+    $list = $web.Lists["TheSPList"]
+    $listitemsCount = $list.Items.Count
+    Write-Host "Items in list: " $listitemsCount " -" $list.title
+
+    $listitems = $list.Items
+
+    foreach($item in @($listitems))  
+    {
+      write-host $item.ID - $item["ListItem: value"]
+    }
+
+    Write-Host "done."
+  
+  

@@ -1,0 +1,38 @@
+PowerShell return SQL result set via stored procedure
+
+  Execute the PowerShell script in the context of an account that has SQL access
+  This is typically a domain service account
+  
+    cls
+
+    Write-Host "working..."
+
+    $SQLServer = "sqlservername"
+    $SQLDBName = "sqldatabase"
+    $SqlQuery = "stored_procedure"
+
+    $SqlConnection = New-Object System.Data.SqlClient.SqlConnection
+    $SqlConnection.ConnectionString = "Server = $SQLServer; Database = $SQLDBName; Integrated Security = True"
+
+    $SqlCmd = New-Object System.Data.SqlClient.SqlCommand
+    $SqlCmd.CommandType = [System.Data.CommandType]::StoredProcedure
+    $SqlCmd.CommandText = $SqlQuery
+    $SqlCmd.Connection = $SqlConnection
+
+    $SqlAdapter = New-Object System.Data.SqlClient.SqlDataAdapter
+    $SqlAdapter.SelectCommand = $SqlCmd
+
+    $DataSet = New-Object System.Data.DataSet
+    $SqlAdapter.Fill($DataSet)
+
+    $SqlConnection.Close()
+
+    foreach ($Row in $DataSet.Tables[0].Rows)
+    {
+      #Write-Host "$($Row)"
+      Write-Host "$($Row.DisplayName)"
+    }
+
+    Write-Host "done."
+
+

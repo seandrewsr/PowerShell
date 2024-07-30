@@ -1,0 +1,89 @@
+
+## to run this file from dos/cmd prompt: powershell -file outlooktest.ps1
+
+
+cls
+
+try
+{
+  ## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  ## load prerequisite microsoft office outlook interop assembly
+  
+  [void][system.reflection.assembly]::Loadwithpartialname("Microsoft.Office.Interop.Outlook") | out-null
+  
+  ## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  
+  
+  
+  ## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  ## override the local script security policy so we can run scripts
+  
+  Set-ExecutionPolicy ByPass
+  
+  ## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  
+  ## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  ## define any global variables
+  
+  $IAAddInFound = $False ## false by default
+  $IsAddInEnabled = $False ## false by default
+  
+  ## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  
+  
+  ## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  ## instantiate the outlook application object
+  
+  $outlook = new-object -comobject outlook.application
+  
+  ## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+  ## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  ## iterate the outlook comaddin collection object
+  ## and look for the interaction add-in
+  ## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  
+  write-host $outlook.COMAddIns.Count " outlook add-ins found" -foregroundcolor "Green"
+  
+  foreach ($srv in $outlook.COMAddIns)
+  {
+    $AddInDescription = $srv.Description
+    $AddInConnectionState = $srv.Connect ## boolean value is true if addin is currently loaded
+    if ($AddInDescription -eq "The name of the Outlook add-in you are looking for")
+    {
+      $IAAddInFound = $True
+    }
+
+    if ($AddInConnectionState -eq "True")
+    {
+      $IsAddInEnabled = $True
+    }
+  }
+
+
+  if ($IAAddInFound) ## display addin found/not found message to console
+  {
+    write-host("The add-in was found") -foregroundcolor "Yellow" -backgroundcolor "Blue"
+  
+    if ($IsAddInEnabled) ## display addin enabled/not enabled message to console
+    {
+      write-host("and is enabled in outlook") -foregroundcolor "Yellow" -backgroundcolor "Blue"
+    }
+    else
+    {
+      write-host("but is NOT enabled in outlook") -foregroundcolor "Yellow" -backgroundcolor "Red"
+    }
+  }
+  else
+  {
+    write-host("The InterAction add-in was NOT found") -foregroundcolor "Yellow" -backgroundcolor "Red"
+  }
+}
+catch
+{
+  write-host("")
+  write-host("general error occurred") -backgroundcolor "Red"
+  write-host("")
+}
+
